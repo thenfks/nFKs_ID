@@ -43,7 +43,7 @@ export function MainContainer({ user }: MainContainerProps) {
 
             <div className="mt-auto pt-20 pb-0 text-center max-w-2xl">
                 <p className="text-sm text-zinc-500 mb-1 leading-relaxed">
-                    Only you can see your settings. You might also want to review your settings for Maps, Search or whatever nFKs service that you use the most. nFKs keeps your data private, safe and secure.
+                    Only you can see your settings. You might also want to review your settings for AyScroll, StriveX or whatever nFKs service that you use the most. nFKs keeps your data private, safe and secure.
                 </p>
             </div>
 

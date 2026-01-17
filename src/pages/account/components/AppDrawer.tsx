@@ -4,6 +4,7 @@ import ayscrollIcon from '../../../assets/images/apps/ayscroll.png';
 import hashtribeIcon from '../../../assets/images/apps/HashTribe.png';
 import notesIcon from '../../../assets/images/apps/nFKs_Notes.png';
 import strivexIcon from '../../../assets/images/apps/StriveX.png';
+import nfksPay from '../../../../public/nfks_logo.png'
 
 interface AppItem {
     name: string;
@@ -16,6 +17,7 @@ const APPS: AppItem[] = [
     { name: 'HashTribe', icon: hashtribeIcon, url: '#' },
     { name: 'Notes', icon: notesIcon, url: '#' },
     { name: 'StriveX', icon: strivexIcon, url: '#' },
+    { name: 'nFKs Pay', icon: nfksPay, url: 'https://payments.nfks.co.in/' }
 ];
 
 function AppIcon({ app }: { app: AppItem }) {

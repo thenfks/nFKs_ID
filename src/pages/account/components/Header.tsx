@@ -1,22 +1,16 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { HelpCircle, LayoutPanelLeft } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import { AppDrawer } from './AppDrawer';
+import { AccountDrawer } from './AccountDrawer';
 
 interface HeaderProps {
     user: User | null;
 }
 
 export function Header({ user }: HeaderProps) {
-    const navigate = useNavigate();
     const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        navigate('/login');
-    };
+    const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
 
     // Get initial from email or metadata, fallback to M
     const initial = user?.email ? user.email[0].toUpperCase() : 'M';
@@ -37,15 +31,16 @@ export function Header({ user }: HeaderProps) {
                 >
                     <LayoutPanelLeft size={20} />
                 </button>
-                <div
+                <button
                     className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-medium cursor-pointer ring-2 ring-[#0A0A0A] hover:opacity-90 transition-opacity"
-                    onClick={handleLogout}
+                    onClick={() => setIsAccountDrawerOpen(!isAccountDrawerOpen)}
                 >
                     {initial}
-                </div>
+                </button>
             </div>
 
             <AppDrawer isOpen={isAppDrawerOpen} onClose={() => setIsAppDrawerOpen(false)} />
+            <AccountDrawer isOpen={isAccountDrawerOpen} onClose={() => setIsAccountDrawerOpen(false)} user={user} />
         </div>
     );
 }

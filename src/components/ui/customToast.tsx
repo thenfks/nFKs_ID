@@ -1,6 +1,6 @@
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
-import { CheckCircle2, AlertCircle, ShieldCheck, XCircle, Info, Loader2 } from "lucide-react";
+import { CheckCircle2, ShieldCheck, XCircle, Loader2 } from "lucide-react";
 
 export function Toaster() {
     const { toasts } = useToast();
