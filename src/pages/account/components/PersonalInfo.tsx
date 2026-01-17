@@ -3,6 +3,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { DatePicker } from '../../../components/ui/DatePicker';
 
 interface PersonalInfoProps {
     user: SupabaseUser | null;
@@ -209,7 +210,7 @@ export function PersonalInfo({ user }: PersonalInfoProps) {
                 </div>
 
                 {/* --- BASIC INFO --- */}
-                <div className="border border-zinc-800 rounded-2xl overflow-hidden bg-[#1E1E1E]/30">
+                <div className="border border-zinc-800 rounded-2xl bg-[#1E1E1E]/30">
                     <div className="p-6 border-b border-zinc-800">
                         <h2 className="text-xl text-white font-normal">Basic info</h2>
                         <p className="text-zinc-500 text-sm mt-1">Some info may be visible to other people using nFKs services.</p>
@@ -252,13 +253,13 @@ export function PersonalInfo({ user }: PersonalInfoProps) {
                     {/* Birthday Row */}
                     <div className="flex items-center justify-between p-6 border-b border-zinc-800">
                         <div className="text-sm font-medium text-zinc-400 uppercase tracking-wider w-32 shrink-0">Birthday</div>
-                        <input
-                            type="text"
-                            className="flex-1 bg-transparent text-white font-medium focus:outline-none placeholder:text-zinc-600"
-                            placeholder="Add birthday"
-                            value={profile.birthday || ''}
-                            onChange={(e) => handleChange('birthday', e.target.value)}
-                        />
+                        <div className="flex-1">
+                            <DatePicker
+                                value={profile.birthday}
+                                onChange={(date) => handleChange('birthday', date)}
+                                placeholder="Add birthday"
+                            />
+                        </div>
                     </div>
 
                     {/* Gender Row */}

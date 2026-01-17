@@ -12,8 +12,10 @@ export function Header({ user }: HeaderProps) {
     const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
     const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
 
-    // Get initial from email or metadata, fallback to M
-    const initial = user?.email ? user.email[0].toUpperCase() : 'M';
+    // Get user details from metadata if available
+    const name = user?.user_metadata?.full_name || user?.user_metadata?.name || (user?.email ? user.email.split('@')[0] : 'nFKs User');
+    const photoUrl = user?.user_metadata?.avatar_url || null;
+    const initial = name && name !== 'nFKs User' ? name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'M');
 
     return (
         <div className="w-full px-6 py-3 flex items-center justify-between border-b border-zinc-900 sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-sm relative">
@@ -32,10 +34,14 @@ export function Header({ user }: HeaderProps) {
                     <LayoutPanelLeft size={20} />
                 </button>
                 <button
-                    className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-medium cursor-pointer ring-2 ring-[#0A0A0A] hover:opacity-90 transition-opacity"
+                    className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-medium cursor-pointer ring-2 ring-[#0A0A0A] hover:opacity-90 transition-opacity overflow-hidden"
                     onClick={() => setIsAccountDrawerOpen(!isAccountDrawerOpen)}
                 >
-                    {initial}
+                    {photoUrl ? (
+                        <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                        initial
+                    )}
                 </button>
             </div>
 

@@ -8,17 +8,19 @@ interface MainContainerProps {
 export function MainContainer({ user }: MainContainerProps) {
     const name = user?.user_metadata?.full_name || user?.user_metadata?.name || (user?.email ? user.email.split('@')[0] : 'nFKs User');
     const email = user?.email || 'user@example.com';
+    const photoUrl = user?.user_metadata?.avatar_url || null;
     const initial = name && name !== 'nFKs User' ? name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'M');
 
     return (
         <main className="flex-1 px-8 pt-10 pb-2 flex flex-col items-center">
             {/* Profile Header */}
             <div className="flex flex-col items-center mb-10">
-                <div className="w-24 h-24 rounded-full bg-purple-600 text-white flex items-center justify-center text-4xl font-normal relative mb-4">
-                    {initial}
-                    <div className="absolute bottom-0 right-0 bg-[#1c1c1c] p-1.5 rounded-full border border-[#0A0A0A] cursor-pointer hover:bg-zinc-800 transition-colors">
-                        <Camera size={14} className="text-white" />
-                    </div>
+                <div className="w-24 h-24 rounded-full bg-purple-600 text-white flex items-center justify-center text-4xl font-normal relative mb-4 overflow-hidden">
+                    {photoUrl ? (
+                        <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                        initial
+                    )}
                 </div>
                 <h1 className="text-3xl font-normal text-white mb-1">{name}</h1>
                 <p className="text-zinc-500">{email}</p>
@@ -43,7 +45,7 @@ export function MainContainer({ user }: MainContainerProps) {
 
             <div className="mt-auto pt-20 pb-0 text-center max-w-2xl">
                 <p className="text-sm text-zinc-500 mb-1 leading-relaxed">
-                    Only you can see your settings. You might also want to review your settings for AyScroll, StriveX or whatever nFKs service that you use the most. nFKs keeps your data private, safe and secure.
+
                 </p>
             </div>
 
