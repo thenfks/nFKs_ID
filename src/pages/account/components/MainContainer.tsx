@@ -1,4 +1,4 @@
-import { Search, Camera } from 'lucide-react';
+import { Search } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 interface MainContainerProps {

@@ -61,7 +61,7 @@ export function AccountDrawer({ isOpen, onClose, user }: AccountDrawerProps) {
                 console.error("Error switching account:", error);
 
                 // If switch fails (e.g. invalid refresh token), redirect to login to re-authenticate
-                navigate('/login');
+                navigate('/login', { state: { email: account.email } });
             } else {
                 // Successful switch.
                 // Force a reload to ensure the entire app state (context, listeners) reflects the new user cleanly.
