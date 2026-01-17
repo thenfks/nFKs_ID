@@ -1,22 +1,34 @@
 import { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { User, Mail } from 'lucide-react';
+import { User as UserIcon, Mail } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { AccountDrawer } from './account/components/AccountDrawer';
 
 export default function Consent() {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+
+    const name = user?.user_metadata?.full_name || user?.user_metadata?.name || (user?.email ? user.email.split('@')[0] : 'User');
+    const email = user?.email || 'user@example.com';
+    const photoUrl = user?.user_metadata?.avatar_url || null;
+    const initial = name && name !== 'User' ? name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U');
 
     const handleAllow = () => {
         setLoading(true);
         // Simulate redirection back to client app
         setTimeout(() => {
-            window.location.href = "https://example.com/callback?code=12345";
+            // In a real OAuth flow, this would redirect to the client's callback URL with a code/token
+            console.log("Allowed access for user:", user?.id);
+            alert("Redirecting to AyScroll...");
+            setLoading(false);
         }, 1500);
     };
 
     return (
-        <div className="animate-fade-in w-full max-w-5xl mx-auto flex items-center justify-center">
-            <Card className="w-full border-[#1A1A1A] bg-[#0A0A0A] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+        <div className="animate-fade-in w-full max-w-5xl mx-auto flex items-center justify-center p-4">
+            <Card className="w-full border-[#1A1A1A] bg-[#0A0A0A] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px] rounded-[2rem]">
                 {/* Left Side */}
                 <div className="w-full md:w-[45%] p-10 border-r border-[#1A1A1A] flex flex-col relative">
                     <div className="flex items-center mb-16">
@@ -30,13 +42,20 @@ export default function Consent() {
                         </h1>
 
                         <div className="mt-12">
-                            <div className="bg-[#151515] p-2 pr-4 rounded-full inline-flex items-center gap-3 border border-[#252525] cursor-pointer hover:border-[#333] transition-colors">
-                                <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                    A
+                            <button
+                                onClick={() => setIsAccountDrawerOpen(true)}
+                                className="bg-[#151515] p-2 pr-4 rounded-full inline-flex items-center gap-3 border border-[#252525] cursor-pointer hover:border-[#333] transition-colors group"
+                            >
+                                <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold overflow-hidden">
+                                    {photoUrl ? (
+                                        <img src={photoUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        initial
+                                    )}
                                 </div>
-                                <span className="text-zinc-200 text-sm">anuragp@nfks.co.in</span>
-                                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                            </div>
+                                <span className="text-zinc-200 text-sm group-hover:text-white transition-colors">{email}</span>
+                                <svg className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            </button>
                         </div>
 
                         <p className="mt-8 text-sm text-zinc-500">
@@ -54,10 +73,10 @@ export default function Consent() {
                     <div className="space-y-4 flex-1">
                         <div className="bg-[#111111] border border-[#222] p-4 rounded-xl flex items-center gap-4">
                             <div className="h-10 w-10 rounded-full bg-[#1A1A1A] flex items-center justify-center text-zinc-400">
-                                <User className="h-5 w-5" />
+                                <UserIcon className="h-5 w-5" />
                             </div>
                             <div>
-                                <p className="text-white font-medium text-sm">Anurag Pandey</p>
+                                <p className="text-white font-medium text-sm">{name}</p>
                                 <p className="text-zinc-500 text-xs">Name and profile picture</p>
                             </div>
                         </div>
@@ -67,7 +86,7 @@ export default function Consent() {
                                 <Mail className="h-5 w-5" />
                             </div>
                             <div>
-                                <p className="text-white font-medium text-sm">anuragp@nfks.co.in</p>
+                                <p className="text-white font-medium text-sm">{email}</p>
                                 <p className="text-zinc-500 text-xs">Email address</p>
                             </div>
                         </div>
@@ -105,6 +124,12 @@ export default function Consent() {
                     </div>
                 </div>
             </Card>
+
+            <AccountDrawer
+                isOpen={isAccountDrawerOpen}
+                onClose={() => setIsAccountDrawerOpen(false)}
+                user={user}
+            />
         </div>
     );
 }

@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { useState, useEffect } from 'react';
 import { X, Camera, UserPlus, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
@@ -12,7 +13,16 @@ interface AccountDrawerProps {
 
 export function AccountDrawer({ isOpen, onClose, user }: AccountDrawerProps) {
     const navigate = useNavigate();
+    const [storedAccounts, setStoredAccounts] = useState<any[]>([]);
+    const [switching, setSwitching] = useState(false);
 
+    useEffect(() => {
+        if (isOpen) {
+            import('../../../lib/accountManager').then(({ getStoredAccounts }) => {
+                setStoredAccounts(getStoredAccounts());
+            });
+        }
+    }, [isOpen, user]);
 
     if (!isOpen) return null;
 
@@ -21,9 +31,47 @@ export function AccountDrawer({ isOpen, onClose, user }: AccountDrawerProps) {
     const photoUrl = user?.user_metadata?.avatar_url || null;
     const initial = name && name !== 'nFKs User' ? name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'M');
 
+    // Filter out current user from stored accounts
+    const otherAccounts = storedAccounts.filter((acc: any) => acc.id !== user?.id);
+
     const handleLogout = async () => {
+        // We do NOT remove the account from storage on logout. 
+        // We want it to remain "listed" so the user can easily sign back in (like Google).
         await supabase.auth.signOut();
         navigate('/login');
+    };
+
+    const handleAddAccount = async () => {
+        // Just sign out to let user log in with new account. 
+        // Current account is already saved by AuthContext.
+        await supabase.auth.signOut();
+        navigate('/login');
+    };
+
+    const handleSwitchAccount = async (account: any) => {
+        try {
+            setSwitching(true);
+            const { error } = await supabase.auth.setSession({
+                refresh_token: account.refreshToken,
+                // Pass stored access token if available, otherwise a structurally valid dummy JWT
+                // to prevent "Invalid JWT structure" client errors.
+                access_token: account.accessToken || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+            });
+            if (error) {
+                console.error("Error switching account:", error);
+
+                // If switch fails (e.g. invalid refresh token), redirect to login to re-authenticate
+                navigate('/login');
+            } else {
+                // Successful switch.
+                // Force a reload to ensure the entire app state (context, listeners) reflects the new user cleanly.
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSwitching(false);
+        }
     };
 
     return createPortal(
@@ -63,32 +111,48 @@ export function AccountDrawer({ isOpen, onClose, user }: AccountDrawerProps) {
                         </div>
                     </div>
                     <h2 className="text-xl text-white font-normal mb-1">Hi, {name}!</h2>
-                    <button className="mt-4 px-6 py-2 rounded-full border border-zinc-600 text-white text-sm font-medium hover:bg-zinc-800 transition-colors">
+                    <button
+                        onClick={() => {
+                            onClose();
+                            navigate('/');
+                        }}
+                        className="mt-4 px-6 py-2 rounded-full border border-zinc-600 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+                    >
                         Manage your nFKs ID
                     </button>
                 </div>
 
                 {/* Accounts List Container */}
                 <div className="w-full bg-[#0A0A0A]/50 rounded-[1.5rem] overflow-hidden border border-zinc-800/50">
-                    {/* Toggle Header (Optional, mimicking expected behavior roughly) */}
-                    {/* <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 cursor-pointer" onClick={() => setShowAccounts(!showAccounts)}>
-                        <span className="text-sm text-zinc-400">Other accounts</span>
-                        {showAccounts ? <ChevronUp size={16} className="text-zinc-400"/> : <ChevronDown size={16} className="text-zinc-400"/>}
-                     </div> */}
 
-                    {/* Mock Secondary Account */}
-                    <div className="flex items-center gap-3 p-4 hover:bg-zinc-800/50 cursor-pointer border-b border-zinc-800/50 transition-colors">
-                        <div className="w-10 h-10 rounded-full bg-pink-600 text-white flex items-center justify-center text-sm font-medium">
-                            J
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="text-sm text-white font-medium truncate">Jane Doe</div>
-                            <div className="text-xs text-zinc-400 truncate">jane.doe@example.com</div>
-                        </div>
-                    </div>
+                    {/* Other Accounts List */}
+                    {otherAccounts.map((account) => (
+                        <button
+                            key={account.id}
+                            disabled={switching}
+                            onClick={() => handleSwitchAccount(account)}
+                            className="w-full flex items-center gap-3 p-4 hover:bg-zinc-800/50 cursor-pointer border-b border-zinc-800/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-zinc-700 text-white flex items-center justify-center text-sm font-medium overflow-hidden">
+                                {account.avatarUrl ? (
+                                    <img src={account.avatarUrl} alt={account.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    account.name ? account.name[0].toUpperCase() : 'U'
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm text-white font-medium truncate">{account.name}</div>
+                                <div className="text-xs text-zinc-400 truncate">{account.email}</div>
+                            </div>
+                        </button>
+                    ))}
 
                     {/* Add Account */}
-                    <button className="w-full flex items-center gap-3 p-4 hover:bg-zinc-800/50 transition-colors text-left border-b border-zinc-800/50">
+                    <button
+                        onClick={handleAddAccount}
+                        disabled={switching}
+                        className="w-full flex items-center gap-3 p-4 hover:bg-zinc-800/50 transition-colors text-left border-b border-zinc-800/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         <div className="w-10 h-10 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-400">
                             <UserPlus size={20} />
                         </div>

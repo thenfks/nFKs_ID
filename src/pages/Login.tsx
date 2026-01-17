@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -8,10 +8,11 @@ import { useToast } from '../hooks/use-toast';
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState<'email' | 'password'>('email');
-    const [email, setEmail] = useState('');
+    const [step, setStep] = useState<'email' | 'password'>(location.state?.email ? 'password' : 'email');
+    const [email, setEmail] = useState(location.state?.email || '');
     const [password, setPassword] = useState('');
 
     const handleEmailSubmit = (e: React.FormEvent) => {

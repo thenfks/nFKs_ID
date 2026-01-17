@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { type User, type Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { saveAccount } from '../lib/accountManager';
 
 interface AuthContextType {
     user: User | null;
@@ -23,12 +24,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
 
+
     useEffect(() => {
         // Check active sessions and sets the user
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+            if (session) saveAccount(session);
         });
 
         // Listen for changes on auth state (logged in, signed out, etc.)
@@ -36,6 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+            if (session) saveAccount(session);
         });
 
         return () => subscription.unsubscribe();
