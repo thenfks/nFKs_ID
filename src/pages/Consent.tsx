@@ -1,30 +1,128 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { User as UserIcon, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AccountDrawer } from './account/components/AccountDrawer';
+import { supabase } from '../lib/supabase';
+import { useToast } from '../hooks/use-toast';
 
 export default function Consent() {
-    const { user } = useAuth();
+    const { user, session } = useAuth();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+    const [client, setClient] = useState<{ name: string; redirect_uris: string[] } | null>(null);
+    const [verifying, setVerifying] = useState(true);
 
     const name = user?.user_metadata?.full_name || user?.user_metadata?.name || (user?.email ? user.email.split('@')[0] : 'User');
     const email = user?.email || 'user@example.com';
     const photoUrl = user?.user_metadata?.avatar_url || null;
     const initial = name && name !== 'User' ? name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U');
 
-    const handleAllow = () => {
+    // Parse OAuth params
+    const searchParams = new URLSearchParams(window.location.search);
+    const clientId = searchParams.get('client_id');
+    const redirectUri = searchParams.get('redirect_uri');
+    const state = searchParams.get('state');
+
+    useEffect(() => {
+        async function fetchClient() {
+            if (!clientId) {
+                setVerifying(false);
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('oauth_clients')
+                    .select('name, redirect_uris')
+                    .eq('client_id', clientId)
+                    .single();
+
+                if (error || !data) {
+                    console.error('Error fetching client:', error);
+                    toast({
+                        title: "Invalid Client",
+                        description: "The application requesting access is not recognized.",
+                        variant: "destructive"
+                    });
+                } else {
+                    setClient(data);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setVerifying(false);
+            }
+        }
+
+        fetchClient();
+    }, [clientId, toast]);
+
+    const appName = client?.name || 'Client Application';
+
+    // Validate Redirect URI
+    const isValidRedirect = client && redirectUri && client.redirect_uris.some((uri: string) => redirectUri.startsWith(uri));
+
+    const handleAllow = async () => {
+        if (!clientId || !redirectUri) {
+            toast({
+                title: "Invalid Request",
+                description: "Missing client_id or redirect_uri",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (!isValidRedirect) {
+            toast({
+                title: "Unauthorized Client",
+                description: "The redirect URI is not authorized for this client.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         setLoading(true);
-        // Simulate redirection back to client app
-        setTimeout(() => {
-            // In a real OAuth flow, this would redirect to the client's callback URL with a code/token
-            console.log("Allowed access for user:", user?.id);
-            alert("Redirecting to AyScroll...");
+
+        try {
+            // We use the Implicit Flow logic here (passing tokens in hash)
+            if (!session) {
+                toast({ title: "Session Error", description: "No active session found.", variant: 'destructive' });
+                setLoading(false);
+                return;
+            }
+
+            const url = new URL(redirectUri);
+
+            // Append tokens to the hash
+            const hashParams = new URLSearchParams();
+            hashParams.set('access_token', session.access_token);
+            hashParams.set('refresh_token', session.refresh_token);
+            hashParams.set('token_type', 'bearer');
+            hashParams.set('expires_in', (session.expires_in || 3600).toString());
+            if (state) hashParams.set('state', state);
+            hashParams.set('provider_token', session.provider_token || '');
+
+            url.hash = hashParams.toString();
+
+            window.location.href = url.toString();
+
+        } catch (e: any) {
+            console.error(e);
+            toast({
+                title: "Authorization Failed",
+                description: e.message,
+                variant: "destructive"
+            });
             setLoading(false);
-        }, 1500);
+        }
     };
+
+    if (verifying) {
+        return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">Verifying application...</div>;
+    }
 
     return (
         <div className="animate-fade-in w-full max-w-5xl mx-auto flex items-center justify-center p-4">
@@ -38,7 +136,7 @@ export default function Consent() {
 
                     <div className="flex-1">
                         <h1 className="text-4xl leading-tight font-medium text-white mb-2">
-                            Sign in to <span className="bg-gradient-to-r from-brand-from to-brand-to bg-clip-text text-transparent font-bold">AyScroll</span>
+                            Sign in to <span className="bg-gradient-to-r from-brand-from to-brand-to bg-clip-text text-transparent font-bold">{appName}</span>
                         </h1>
 
                         <div className="mt-12">
@@ -64,10 +162,9 @@ export default function Consent() {
                     </div>
                 </div>
 
-                {/* Right Side */}
                 <div className="w-full md:w-[55%] p-10 flex flex-col">
                     <h2 className="text-xl text-white mb-8 text-center md:text-left">
-                        nFKs ID will allow <span className="text-brand-from font-medium">AyScroll</span> to access this info about you
+                        nFKs ID will allow <span className="text-brand-from font-medium">{appName}</span> to access this info about you
                     </h2>
 
                     <div className="space-y-4 flex-1">
@@ -104,7 +201,7 @@ export default function Consent() {
 
                     <div className="mt-8">
                         <p className="text-xs text-zinc-500 text-center mb-6">
-                            Review AyScroll's <span className="text-brand-from">privacy policy</span> and <span className="text-brand-from">Terms of Service</span>.
+                            Review {appName}'s <span className="text-brand-from">privacy policy</span> and <span className="text-brand-from">Terms of Service</span>.
                         </p>
                         <div className="flex gap-4">
                             <Button

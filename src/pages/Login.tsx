@@ -34,7 +34,19 @@ export default function Login() {
 
             if (error) throw error;
 
-            navigate('/');
+            // Check for OAuth params
+            const searchParams = new URLSearchParams(location.search);
+            const redirectUri = searchParams.get('redirect_uri');
+            const clientId = searchParams.get('client_id');
+
+
+            if (redirectUri || clientId) {
+                // If we're in an OAuth flow, go to consent
+                navigate(`/consent${location.search}`);
+            } else {
+                // Otherwise go to dashboard
+                navigate('/');
+            }
         } catch (error: any) {
             toast({
                 title: "Authentication failed",
