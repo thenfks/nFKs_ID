@@ -6,8 +6,11 @@ import { Card } from '../components/ui/Card';
 import { supabase } from '../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
+import { useToast } from '../hooks/use-toast';
+
 export default function Register() {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState<1 | 2>(1);
     const [formData, setFormData] = useState({
@@ -19,6 +22,7 @@ export default function Register() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passError, setPassError] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,7 +42,7 @@ export default function Register() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
-            alert("Passwords don't match");
+            setPassError("Passwords don't match");
             return;
         }
 
@@ -60,7 +64,11 @@ export default function Register() {
 
             navigate('/verify-email', { state: { email: formData.email } });
         } catch (error: any) {
-            alert(error.message || 'An error occurred during registration');
+            toast({
+                title: "Registration failed",
+                description: error.message || 'An error occurred during registration',
+                variant: 'destructive',
+            });
         } finally {
             setLoading(false);
         }
@@ -119,8 +127,11 @@ export default function Register() {
                                             name="password"
                                             placeholder="Password"
                                             value={formData.password}
-                                            onChange={handleChange}
-                                            className="bg-[#1c1c1c] border-zinc-700 text-white h-14 rounded-lg focus:border-white focus:ring-1 focus:ring-white placeholder:text-zinc-500"
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                                setPassError('');
+                                            }}
+                                            className={`bg-[#1c1c1c] border-zinc-700 text-white h-14 rounded-lg focus:border-white focus:ring-1 focus:ring-white placeholder:text-zinc-500 ${passError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                                             required
                                             rightElement={
                                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="focus:outline-none text-zinc-400 hover:text-white transition-colors">
@@ -133,8 +144,11 @@ export default function Register() {
                                             name="confirmPassword"
                                             placeholder="Confirm"
                                             value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            className="bg-[#1c1c1c] border-zinc-700 text-white h-14 rounded-lg focus:border-white focus:ring-1 focus:ring-white placeholder:text-zinc-500"
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                                setPassError('');
+                                            }}
+                                            className={`bg-[#1c1c1c] border-zinc-700 text-white h-14 rounded-lg focus:border-white focus:ring-1 focus:ring-white placeholder:text-zinc-500 ${passError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                                             rightElement={
                                                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="focus:outline-none text-zinc-400 hover:text-white transition-colors">
                                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -142,9 +156,13 @@ export default function Register() {
                                             }
                                         />
                                     </div>
-                                    <p className="text-xs text-zinc-500 max-w-xs">
-                                        Use 8 or more characters with a mix of letters, numbers & symbols
-                                    </p>
+                                    {passError ? (
+                                        <p className="text-xs text-red-500 mt-1">{passError}</p>
+                                    ) : (
+                                        <p className="text-xs text-zinc-500 max-w-xs">
+                                            Use 8 or more characters with a mix of letters, numbers & symbols
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -154,18 +172,19 @@ export default function Register() {
                                 Sign in instead
                             </Link>
 
-                            {/* Optional Back Button for Step 2 if we wanted, but user didn't ask explicitly. keeping minimal */}
-                            {step === 2 && (
-                                <button type="button" onClick={() => setStep(1)} className="mr-4 text-zinc-400 hover:text-white text-sm">Back</button>
-                            )}
+                            <div className="flex items-center gap-4 ml-auto">
+                                {step === 2 && (
+                                    <button type="button" onClick={() => setStep(1)} className="text-zinc-400 hover:text-white text-sm">Back</button>
+                                )}
 
-                            <Button
-                                type="submit"
-                                className="h-10 px-8 rounded-full bg-white text-black font-medium hover:bg-zinc-200 transition-colors ml-auto"
-                                isLoading={loading}
-                            >
-                                Next
-                            </Button>
+                                <Button
+                                    type="submit"
+                                    className="h-10 px-8 rounded-full bg-white text-black font-medium hover:bg-zinc-200 transition-colors"
+                                    isLoading={loading}
+                                >
+                                    Next
+                                </Button>
+                            </div>
                         </div>
                     </form>
                 </div>

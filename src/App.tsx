@@ -6,6 +6,7 @@ import Consent from './pages/Consent';
 import VerifyEmail from './pages/VerifyEmail';
 import { AuthLayout } from './layouts/AuthLayout';
 import { AuthProvider } from './context/AuthContext';
+import { Toaster } from './components/ui/customToast';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
+      <Toaster />
     </AuthProvider>
   );
 }

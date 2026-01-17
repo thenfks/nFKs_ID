@@ -4,9 +4,11 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../hooks/use-toast';
 
 export default function Login() {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState<'email' | 'password'>('email');
     const [email, setEmail] = useState('');
@@ -33,7 +35,11 @@ export default function Login() {
 
             navigate('/');
         } catch (error: any) {
-            alert(error.message || 'An error occurred during login');
+            toast({
+                title: "Authentication failed",
+                description: error.message || 'An error occurred during login',
+                variant: 'destructive'
+            });
         } finally {
             setLoading(false);
         }

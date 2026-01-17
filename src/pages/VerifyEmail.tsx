@@ -10,6 +10,7 @@ export default function VerifyEmail() {
 
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault();
+
         // Simulate verification or implement actual Supabase verifyOtp
         setTimeout(() => {
             navigate('/');
